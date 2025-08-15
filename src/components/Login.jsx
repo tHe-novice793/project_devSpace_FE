@@ -1,10 +1,16 @@
 import axios from "axios";
-import React, { useState } from "react";
+import { useState } from "react";
+import { useDispatch } from "react-redux";
+import { addUser } from "../utils/userSlice";
+import { useNavigate } from "react-router-dom";
+import { BASE_URL } from "../utils/constants";
 
 const Login = () => {
   const [emailId, setEmailId] = useState("ankitbhoi@gmail.com");
   const [password, setPassword] = useState("Ankitbhoi#123");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false); // State for password visibility
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const togglePasswordVisibility = () => {
     setIsPasswordVisible(!isPasswordVisible); // Toggle password visibility
@@ -13,7 +19,7 @@ const Login = () => {
   const handleLogin = async () => {
     try {
       const res = await axios.post(
-        "http://localhost:3000/auth/login",
+        `${BASE_URL}/auth/login`,
         {
           emailId,
           password,
@@ -22,6 +28,8 @@ const Login = () => {
           withCredentials: true,
         }
       );
+      dispatch(addUser(res.data));
+      return navigate("/");
     } catch (err) {
       console.error(err);
     }
