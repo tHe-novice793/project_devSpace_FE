@@ -1,5 +1,5 @@
 import { useSelector, useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const NavBar = () => {
   const user = useSelector((store) => store.user);
@@ -15,9 +15,9 @@ const NavBar = () => {
     <div className="navbar bg-base-300 shadow-sm">
       {/* Left Side */}
       <div className="flex-1">
-        <a className="btn btn-ghost text-xl" href="/">
+        <Link className="btn btn-ghost text-xl" to="/">
           devSpaces
-        </a>
+        </Link>
       </div>
 
       {/* Right Side (Desktop) */}
@@ -101,15 +101,16 @@ const NavBar = () => {
               className="menu menu-sm dropdown-content bg-base-100 rounded-box z-10 mt-3 w-52 p-2 shadow"
             >
               <li>
-                <button onClick={() => navigate("/profile")}>
-                  Profile <span className="badge">New</span>
-                </button>
+                <Link to="/profile">
+                  Profile 
+                  <span className="badge">New</span>
+                </Link>
               </li>
               <li>
-                <button onClick={() => navigate("/settings")}>Settings</button>
+                <Link to="/settings">Settings</Link>
               </li>
               <li>
-                <button className="text-error">Logout</button>
+                <Link to="/logout" className="text-error">Logout</Link>
               </li>
             </ul>
           </div>
