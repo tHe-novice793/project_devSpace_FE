@@ -1,10 +1,29 @@
+import axios from "axios";
 import { useSelector, useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
+import { BASE_URL } from "../utils/constants";
+import { removeUser } from "../utils/userSlice";
 
 const NavBar = () => {
   const user = useSelector((store) => store.user);
-  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const handleLogout = async () => {
+    try {
+      await axios.post(
+        BASE_URL + "/auth/logout",
+        {},
+        {
+          withCredentials: true,
+        }
+      );
+      dispatch(removeUser())
+      navigate("/login");
+    } catch (err) {
+      console.error("Logout failed:", err);
+    }
+  };
 
   // const handleLogout = () => {
   //   // dispatch(logoutUser());
@@ -102,7 +121,7 @@ const NavBar = () => {
             >
               <li>
                 <Link to="/profile">
-                  Profile 
+                  Profile
                   <span className="badge">New</span>
                 </Link>
               </li>
@@ -110,7 +129,12 @@ const NavBar = () => {
                 <Link to="/settings">Settings</Link>
               </li>
               <li>
-                <Link to="/logout" className="text-error">Logout</Link>
+                <button
+                  onClick={handleLogout}
+                  className="text-error btn btn-ghost"
+                >
+                  Logout
+                </button>
               </li>
             </ul>
           </div>
@@ -149,7 +173,9 @@ const NavBar = () => {
                 <button onClick={() => navigate("/settings")}>Settings</button>
               </li>
               <li>
-                <button className="text-error">Logout</button>
+                <button onClick={handleLogout} className="text-error">
+                  Logout
+                </button>
               </li>
             </>
           )}

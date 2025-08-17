@@ -1,6 +1,6 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import NavBar from "./NavBar";
-import { Navigate, Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import Footer from "./Footer";
 import axios from "axios";
 import { BASE_URL } from "../utils/constants";
@@ -12,25 +12,48 @@ const Body = () => {
   const navigate = useNavigate();
   const userData = useSelector((store) => store.user);
 
-  const fetchuser = async () => {
-    if (userData) return;
+  // Track loading state while fetching user profile
+  const [loading, setLoading] = useState(true);
+
+  const fetchUser = async () => {
     try {
-      const res = await axios.get(BASE_URL + "/profile/view", {
+      // If user data already exists, skip fetching
+      if (userData?.data?.id) {
+        setLoading(false);
+        return;
+      }
+
+      const res = await axios.get(`${BASE_URL}/profile/view`, {
         withCredentials: true,
       });
 
       dispatch(addUser(res.data));
+      setLoading(false);
     } catch (err) {
-      if (err.status === 401) {
+      if (err.response?.status === 401) {
+        // Unauthorized: redirect to login
         navigate("/login");
+      } else {
+        // Log unexpected errors only
+        console.error(err.message);
       }
-      console.error(err);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchuser();
+    fetchUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  if (loading) {
+    // Show a loading indicator while fetching
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-xl font-semibold">Checking authentication...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
