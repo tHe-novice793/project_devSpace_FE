@@ -3,7 +3,7 @@ import { FaInbox } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
 import { BASE_URL } from "../utils/constants";
-import { addRequests } from "../utils/requestSlice";
+import { addRequests, removeRequest } from "../utils/requestSlice";
 import RequestCard from "../components/RequestCard";
 
 const Requests = () => {
@@ -32,7 +32,8 @@ const Requests = () => {
           withCredentials: true,
         }
       );
-      fetchRequests(); // Refresh the list after action
+      dispatch(removeRequest(id))
+      // fetchRequests(); // Refresh the list after action
     } catch (err) {
       console.error(`Failed to ${action} request:`, err);
     }
