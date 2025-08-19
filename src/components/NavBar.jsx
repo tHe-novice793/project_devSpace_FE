@@ -3,12 +3,19 @@ import { useSelector, useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { BASE_URL } from "../utils/constants";
 import { removeUser } from "../utils/userSlice";
+import { useState, useEffect } from "react";
 
 const NavBar = () => {
   const user = useSelector((store) => store.user);
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  // Track current theme to sync toggle button
+  const [currentTheme, setCurrentTheme] = useState(
+    typeof window !== "undefined" ? document.documentElement.getAttribute("data-theme") || "default" : "default"
+  );
+
+  // Handle logout
   const handleLogout = async () => {
     try {
       await axios.post(
@@ -18,17 +25,37 @@ const NavBar = () => {
           withCredentials: true,
         }
       );
-      dispatch(removeUser())
+      dispatch(removeUser());
       navigate("/login");
     } catch (err) {
       console.error("Logout failed:", err);
     }
   };
 
-  // const handleLogout = () => {
-  //   // dispatch(logoutUser());
-  //   navigate("/login");
-  // };
+  // Update theme on dropdown change
+  const handleThemeChange = (theme) => {
+    document.documentElement.setAttribute("data-theme", theme);
+    setCurrentTheme(theme);
+  };
+
+  // Dark/Light toggle (simple toggle between "dark" and "light" themes)
+  const toggleDarkMode = () => {
+    if (currentTheme === "dark") {
+      handleThemeChange("light");
+    } else {
+      handleThemeChange("dark");
+    }
+  };
+
+  // On mount, listen for theme changes done outside (optional)
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      const newTheme = document.documentElement.getAttribute("data-theme");
+      setCurrentTheme(newTheme || "default");
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div className="navbar bg-base-300 shadow-sm">
@@ -41,7 +68,7 @@ const NavBar = () => {
 
       {/* Right Side (Desktop) */}
       <div className="hidden md:flex items-center gap-4">
-        {/* Theme Switcher */}
+        {/* Theme Switcher Dropdown */}
         <div className="dropdown dropdown-end">
           <div tabIndex={0} role="button" className="btn m-1">
             Theme
@@ -59,21 +86,31 @@ const NavBar = () => {
             tabIndex={0}
             className="dropdown-content bg-base-300 rounded-box z-10 w-52 p-2 shadow-2xl"
           >
-            {["default", "retro", "cyberpunk", "valentine", "aqua"].map(
-              (theme) => (
-                <li key={theme}>
-                  <input
-                    type="radio"
-                    name="theme-dropdown"
-                    className="theme-controller btn btn-sm btn-block btn-ghost justify-start"
-                    aria-label={theme}
-                    value={theme}
-                  />
-                </li>
-              )
-            )}
+            {["default", "retro", "cyberpunk", "valentine", "aqua", "dark", "light"].map((theme) => (
+              <li key={theme}>
+                <input
+                  type="radio"
+                  name="theme-dropdown"
+                  className="theme-controller btn btn-sm btn-block btn-ghost justify-start"
+                  aria-label={theme}
+                  value={theme}
+                  checked={currentTheme === theme}
+                  onChange={() => handleThemeChange(theme)}
+                />
+              </li>
+            ))}
           </ul>
         </div>
+
+        {/* Dark/Light Toggle Button */}
+        <button
+          className="btn btn-outline btn-sm"
+          onClick={toggleDarkMode}
+          aria-label="Toggle Dark Mode"
+          title="Toggle Dark Mode"
+        >
+          {currentTheme === "dark" ? "Light Mode" : "Dark Mode"}
+        </button>
 
         {/* User Info & Dropdown */}
         {user && (
@@ -83,12 +120,7 @@ const NavBar = () => {
               role="button"
               className="btn btn-ghost normal-case flex items-center gap-2"
             >
-              <div className="form-control">
-                Welcome, {user?.data?.firstName}
-              </div>
-              {/* <span className="hidden lg:block">
-                Welcome {user?.data?.firstName}
-              </span> */}
+              <div className="form-control">Welcome, {user?.data?.firstName}</div>
               <div className="avatar w-8 h-8 rounded-full overflow-hidden">
                 {user?.data?.photoUrl ? (
                   <img
@@ -126,13 +158,10 @@ const NavBar = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/settings">Settings</Link>
+                <Link to="/connections">Connections</Link>
               </li>
               <li>
-                <button
-                  onClick={handleLogout}
-                  className="text-error btn btn-ghost"
-                >
+                <button onClick={handleLogout} className="text-error btn btn-ghost">
                   Logout
                 </button>
               </li>
@@ -151,12 +180,7 @@ const NavBar = () => {
             viewBox="0 0 24 24"
             xmlns="http://www.w3.org/2000/svg"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 6h16M4 12h16M4 18h16"
-            />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </div>
         <ul
@@ -170,7 +194,7 @@ const NavBar = () => {
                 <button onClick={() => navigate("/profile")}>Profile</button>
               </li>
               <li>
-                <button onClick={() => navigate("/settings")}>Settings</button>
+                <button onClick={() => navigate("/connections")}>Connection</button>
               </li>
               <li>
                 <button onClick={handleLogout} className="text-error">
@@ -180,19 +204,19 @@ const NavBar = () => {
             </>
           )}
           <li className="mt-2 border-t pt-2 text-xs text-gray-500">Theme</li>
-          {["default", "retro", "cyberpunk", "valentine", "aqua"].map(
-            (theme) => (
-              <li key={theme}>
-                <input
-                  type="radio"
-                  name="theme-dropdown-mobile"
-                  className="theme-controller btn btn-sm btn-block btn-ghost justify-start"
-                  aria-label={theme}
-                  value={theme}
-                />
-              </li>
-            )
-          )}
+          {["default", "retro", "cyberpunk", "valentine", "aqua", "dark", "light"].map((theme) => (
+            <li key={theme}>
+              <input
+                type="radio"
+                name="theme-dropdown-mobile"
+                className="theme-controller btn btn-sm btn-block btn-ghost justify-start"
+                aria-label={theme}
+                value={theme}
+                checked={currentTheme === theme}
+                onChange={() => handleThemeChange(theme)}
+              />
+            </li>
+          ))}
         </ul>
       </div>
     </div>

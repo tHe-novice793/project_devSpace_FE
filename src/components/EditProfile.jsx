@@ -5,7 +5,6 @@ import { BASE_URL } from "../utils/constants";
 import { useDispatch } from "react-redux";
 import axios from "axios";
 import { addUser } from "../utils/userSlice";
-// import { addUser } from "../redux/userSlice"; // Assuming you have this action
 
 const genderOptions = ["male", "female", "others"];
 
@@ -28,6 +27,7 @@ const EditProfile = ({ user }) => {
   const debounceTimer = useRef(null);
   const dispatch = useDispatch();
 
+  // Debounce skill input
   useEffect(() => {
     if (!skillInput.trim()) return;
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
@@ -47,15 +47,50 @@ const EditProfile = ({ user }) => {
     setSkillInput("");
   };
 
-  const handlePhotoUpload = (e) => {
+  const handlePhotoUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPhotoPreview(reader.result);
-      setPhotoUrl(reader.result);
-    };
-    reader.readAsDataURL(file);
+
+    // Optional: Size check
+    if (file.size > 5 * 1024 * 1024) {
+      setError("File too large (max 5MB).");
+      return;
+    }
+
+    const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+    const uploadUrl = import.meta.env.VITE_CLOUDINARY_UPLOAD_URL;
+
+    if (!uploadPreset || !uploadUrl) {
+      setError("Cloudinary configuration is missing.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", uploadPreset);
+
+    try {
+      // Optional: show preview instantly
+      setPhotoPreview(URL.createObjectURL(file));
+
+      const response = await fetch(uploadUrl, {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+      console.log(data);
+
+      if (data.secure_url) {
+        setPhotoUrl(data.secure_url);
+        setPhotoPreview(data.secure_url);
+      } else {
+        throw new Error("Upload failed");
+      }
+    } catch (error) {
+      console.error("Image upload failed:", error);
+      setError("Image upload failed. Please try again.");
+    }
   };
 
   const handleDragEnd = (result) => {
@@ -95,7 +130,6 @@ const EditProfile = ({ user }) => {
       setError("");
       setSuccess("Profile Saved Successfully.");
 
-      // Smooth scroll to preview
       if (userCardRef.current) {
         userCardRef.current.scrollIntoView({ behavior: "smooth" });
       }
@@ -129,7 +163,6 @@ const EditProfile = ({ user }) => {
             Edit Profile
           </h2>
 
-          {/* Mobile Preview Toggle */}
           <div className="mb-4 md:hidden text-center">
             <button
               className="btn btn-sm btn-outline"
@@ -285,7 +318,7 @@ const EditProfile = ({ user }) => {
             </div>
           )}
 
-          {/* Action Buttons */}
+          {/* Buttons */}
           <div className="flex flex-col sm:flex-row justify-end gap-4 mt-6">
             <button
               className="btn btn-outline btn-error w-full sm:w-auto"
@@ -304,12 +337,11 @@ const EditProfile = ({ user }) => {
         </div>
       </div>
 
-      {/* Preview Section */}
+      {/* Preview */}
       {showPreview && (
         <div
           ref={userCardRef}
           className="w-full md:w-1/3 bg-base-100 rounded-lg shadow p-4 overflow-hidden"
-          //   style={{ minWidth: 0 }}
         >
           <UserCard
             user={{
