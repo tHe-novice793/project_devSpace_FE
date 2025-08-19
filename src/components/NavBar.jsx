@@ -161,6 +161,9 @@ const NavBar = () => {
                 <Link to="/connections">Connections</Link>
               </li>
               <li>
+                <Link to="/requests">Connection Requests</Link>
+              </li>
+              <li>
                 <button onClick={handleLogout} className="text-error btn btn-ghost">
                   Logout
                 </button>
@@ -196,6 +199,12 @@ const NavBar = () => {
               <li>
                 <button onClick={() => navigate("/connections")}>Connection</button>
               </li>
+              <li>
+                <button onClick={() => navigate("/requests")}>
+                  Connection Requests
+                </button>
+              </li>
+              
               <li>
                 <button onClick={handleLogout} className="text-error">
                   Logout
