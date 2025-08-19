@@ -10,6 +10,7 @@ const Requests = () => {
   const dispatch = useDispatch();
   const requests = useSelector((store) => store.requests);
 
+  // Fetch requests from API
   const fetchRequests = async () => {
     try {
       const res = await axios.get(`${BASE_URL}/user/requests/received`, {
@@ -21,6 +22,7 @@ const Requests = () => {
     }
   };
 
+  // Handle accept/reject request
   const handleReview = async (id, action) => {
     try {
       await axios.post(
@@ -30,7 +32,7 @@ const Requests = () => {
           withCredentials: true,
         }
       );
-      fetchRequests(); // Refresh after action
+      fetchRequests(); // Refresh the list after action
     } catch (err) {
       console.error(`Failed to ${action} request:`, err);
     }
@@ -40,15 +42,22 @@ const Requests = () => {
     fetchRequests();
   }, []);
 
+  // Filter only requests that are pending (you can adjust the status as per your backend)
+  const pendingRequests = Array.isArray(requests)
+    ? requests.filter((req) => req.status === "pending" || !req.status)
+    : [];
+
   return (
     <div className="p-4">
       <h2 className="text-2xl font-semibold mb-4">Connection Requests</h2>
-      {Array.isArray(requests) && requests.length > 0 ? (
+
+      {pendingRequests.length > 0 ? (
         <div className="grid gap-4">
-          {requests.map((req) => (
+          {pendingRequests.map((req) => (
             <RequestCard
               key={req._id}
               user={req.fromUserId}
+              status={req.status}
               onAccept={() => handleReview(req._id, "accepted")}
               onReject={() => handleReview(req._id, "rejected")}
             />
@@ -63,8 +72,7 @@ const Requests = () => {
             later or{" "}
             <span className="font-semibold">
               Explore profiles to connect with others.
-            </span>{" "}
-            {/* page. */}
+            </span>
           </p>
         </div>
       )}
