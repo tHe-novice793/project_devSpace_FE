@@ -61,8 +61,8 @@ const NavBar = () => {
     <div className="navbar bg-base-300 shadow-sm">
       {/* Left Side */}
       <div className="flex-1">
-        <Link className="btn btn-ghost text-xl" to="/">
-          devSpaces
+        <Link className="btn btn-ghost text-xl" to="/feed">
+          Connectify
         </Link>
       </div>
 

@@ -1,22 +1,18 @@
 import React, { useEffect, useState } from "react";
-import NavBar from "./NavBar";
+import NavBar from "../NavBar";
+import Footer from "../Footer";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
-import Footer from "./Footer";
 import axios from "axios";
-import { BASE_URL } from "../utils/constants";
+import { BASE_URL } from "../../utils/constants";
 import { useDispatch, useSelector } from "react-redux";
-import { addUser } from "../utils/userSlice";
+import { addUser } from "../../utils/userSlice";
 
-const Body = () => {
+const MainLayout = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const location = useLocation();  // current path
+  const location = useLocation();
   const userData = useSelector((store) => store.user);
-
   const [loading, setLoading] = useState(true);
-
-  // Paths where NavBar and Footer should NOT be shown
-  const publicPaths = ["/login", "/signup"];
 
   const fetchUser = async () => {
     try {
@@ -24,20 +20,14 @@ const Body = () => {
         setLoading(false);
         return;
       }
-
       const res = await axios.get(`${BASE_URL}/profile/view`, {
         withCredentials: true,
       });
-
       dispatch(addUser(res.data));
       setLoading(false);
     } catch (err) {
       if (err.response?.status === 401) {
-        if (!publicPaths.includes(location.pathname)) {
-          navigate("/login");
-        }
-      } else {
-        console.error(err.message);
+        navigate("/login");
       }
       setLoading(false);
     }
@@ -45,7 +35,6 @@ const Body = () => {
 
   useEffect(() => {
     fetchUser();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
   if (loading) {
@@ -56,21 +45,15 @@ const Body = () => {
     );
   }
 
-  const isPublicPage = publicPaths.includes(location.pathname);
-
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Conditionally render NavBar */}
-      {!isPublicPage && <NavBar />}
-      
+    <div className="min-h-screen flex flex-col bg-white">
+      <NavBar />
       <main className="flex-grow">
         <Outlet />
       </main>
-      
-      {/* Conditionally render Footer */}
-      {!isPublicPage && <Footer />}
+      <Footer />
     </div>
   );
 };
 
-export default Body;
+export default MainLayout;

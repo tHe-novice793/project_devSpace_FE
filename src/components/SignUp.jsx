@@ -1,58 +1,83 @@
+import React, { useRef, useState, useEffect } from "react";
 import axios from "axios";
-import { useState, useRef, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { addUser } from "../utils/userSlice";
 import { useNavigate, Link } from "react-router-dom";
 import { BASE_URL } from "../utils/constants";
+import { useDispatch, useSelector } from "react-redux";
+import { addUser } from "../utils/userSlice";
 
-const Login = () => {
-  const dispatch = useDispatch();
+const Signup = () => {
   const userData = useSelector((store) => store.user);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
+  // Redirect if already logged in
   useEffect(() => {
     if (userData?.data?.id) {
       navigate("/feed");
     }
   }, [userData, navigate]);
 
+  const firstNameRef = useRef(null);
+  const lastNameRef = useRef(null);
   const emailRef = useRef(null);
   const passwordRef = useRef(null);
 
-  const [emailId, setEmailId] = useState("");
-  const [password, setPassword] = useState("");
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    emailId: "",
+    password: "",
+  });
   const [error, setError] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
-  const togglePasswordVisibility = () => {
-    setIsPasswordVisible(!isPasswordVisible);
+  const togglePasswordVisibility = () => setIsPasswordVisible((v) => !v);
+
+  const handleChange = (e) => {
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setError("");
+    setSuccessMsg("");
   };
 
-  const handleLogin = async () => {
-    try {
-      const res = await axios.post(
-        `${BASE_URL}/auth/login`,
-        { emailId, password },
-        { withCredentials: true }
-      );
-      dispatch(addUser(res.data));
-      navigate("/feed");
-    } catch (err) {
-      const errorMsg =
-        err?.response?.data?.message ||
-        err?.response?.data ||
-        "Something went wrong. Try again later!";
-      setError(errorMsg);
-      console.error("Login error:", errorMsg);
-    }
-  };
-
+  // Handle Enter key navigation
   const handleKeyDown = (e, nextRef) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      if (nextRef && nextRef.current) {
+      if (nextRef?.current) {
         nextRef.current.focus();
       }
+    }
+  };
+
+  const handleSignup = async () => {
+    setError("");
+    setSuccessMsg("");
+    const { firstName, lastName, emailId, password } = formData;
+
+    if (!firstName || !lastName || !emailId || !password) {
+      setError("Please fill all the fields.");
+      return;
+    }
+
+    try {
+      const res = await axios.post(
+        `${BASE_URL}/auth/signup`,
+        { firstName, lastName, emailId, password },
+        { withCredentials: true }
+      );
+
+      if (res.data.success) {
+        console.log(res.data.data)
+        dispatch(addUser(res.data.data))
+        setSuccessMsg(res.data.message || "Signup successful! Redirecting...");
+        setTimeout(() => navigate("/feed"), 2000);
+      }
+    } catch (err) {
+      setError(
+        err?.response?.data?.message ||
+          "Something went wrong during signup. Try again later!"
+      );
     }
   };
 
@@ -60,37 +85,74 @@ const Login = () => {
     <div>
       <div className="w-full max-w-md mx-auto">
         <fieldset className="bg-white text-black shadow-lg rounded-lg p-6 w-full">
+          {/* 
+          <legend className="text-xl font-semibold mt-6 mb-6">Sign Up</legend> */}
+          {/* <fieldset className="border p-6 rounded-md"> */}
           <legend className="px-2 text-lg font-semibold text-center w-full">
-            Login
+            Signup
           </legend>
 
+          {/* First Name */}
+          <div className="mb-4">
+            <label className="block mb-1 font-medium text-sm">First Name</label>
+            <input
+              ref={firstNameRef}
+              type="text"
+              name="firstName"
+              value={formData.firstName}
+              className="input w-full"
+              placeholder="First Name"
+              onChange={handleChange}
+              onKeyDown={(e) => handleKeyDown(e, lastNameRef)}
+            />
+          </div>
+
+          {/* Last Name */}
+          <div className="mb-4">
+            <label className="block mb-1 font-medium text-sm">Last Name</label>
+            <input
+              ref={lastNameRef}
+              type="text"
+              name="lastName"
+              value={formData.lastName}
+              className="input w-full"
+              placeholder="Last Name"
+              onChange={handleChange}
+              onKeyDown={(e) => handleKeyDown(e, emailRef)}
+            />
+          </div>
+
+          {/* Email */}
           <div className="mb-4">
             <label className="block mb-1 font-medium text-sm">Email</label>
             <input
               ref={emailRef}
               type="email"
-              value={emailId}
+              name="emailId"
+              value={formData.emailId}
               className="input w-full"
               placeholder="Email"
-              onChange={(e) => setEmailId(e.target.value)}
+              onChange={handleChange}
               onKeyDown={(e) => handleKeyDown(e, passwordRef)}
             />
           </div>
 
-          <div className="mb-4">
+          {/* Password */}
+          <div className="mb-6">
             <label className="block mb-1 font-medium text-sm">Password</label>
             <div className="relative">
               <input
                 ref={passwordRef}
                 type={isPasswordVisible ? "text" : "password"}
-                value={password}
+                name="password"
+                value={formData.password}
                 className="input w-full pr-10"
                 placeholder="Password"
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={handleChange}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
-                    handleLogin();
+                    handleSignup();
                   }
                 }}
               />
@@ -101,7 +163,7 @@ const Login = () => {
                 style={{ zIndex: 1 }}
               >
                 {isPasswordVisible ? (
-                  // 👁️ Eye Open
+                  // 👁️ Visible
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -122,7 +184,7 @@ const Login = () => {
                     />
                   </svg>
                 ) : (
-                  // 🚫 Eye Closed
+                  // 🚫 Hidden
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -142,23 +204,31 @@ const Login = () => {
             </div>
           </div>
 
-          {error && <p className="text-red-500 text-sm mt-2">ERROR: {error}</p>}
+          {error && (
+            <p className="text-red-500 mt-2 text-center font-semibold">
+              {error}
+            </p>
+          )}
+          {successMsg && (
+            <p className="text-green-600 mt-2 text-center font-semibold">
+              {successMsg}
+            </p>
+          )}
 
           <button
-            className="btn btn-neutral mt-4 w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
-            onClick={handleLogin}
+            className="btn btn-neutral w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
+            onClick={handleSignup}
           >
-            Login
+            Sign Up
           </button>
 
-          {/* Add sign up link here */}
-          <p className="mt-4 text-center text-gray-700">
-            Don't have an account?{" "}
+          <p className="mt-4 text-center text-gray-600">
+            Already have an account?{" "}
             <Link
-              to="/signup"
-              className="text-blue-600 font-semibold hover:underline"
+              to="/login"
+              className="text-blue-600 hover:underline font-semibold"
             >
-              Sign Up
+              Log in
             </Link>
           </p>
         </fieldset>
@@ -167,4 +237,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default Signup;

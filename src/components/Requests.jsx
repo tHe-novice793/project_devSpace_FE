@@ -16,6 +16,7 @@ const Requests = () => {
       const res = await axios.get(`${BASE_URL}/user/requests/received`, {
         withCredentials: true,
       });
+      console.log("Requests response:", res.data);
       dispatch(addRequests(res.data.data));
     } catch (err) {
       console.error("Failed to fetch requests:", err);
@@ -45,7 +46,7 @@ const Requests = () => {
 
   // Filter only requests that are pending (you can adjust the status as per your backend)
   const pendingRequests = Array.isArray(requests)
-    ? requests.filter((req) => req.status === "pending" || !req.status)
+    ? requests.filter((req) => req.status === "interested" || !req.status)
     : [];
 
   return (
